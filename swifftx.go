@@ -2,7 +2,7 @@
 package swifftx
 
 /*
-#cgo CFLAGS: -I.
+#cgo CFLAGS: -I.  // Ensure it includes the current directory
 #cgo LDFLAGS: -L. -lSWIFFTX
 #include "SHA3.h"
 #include <stdlib.h>
