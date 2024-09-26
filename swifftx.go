@@ -10,6 +10,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"os"
 	"unsafe"
 )
 
@@ -17,16 +18,10 @@ type SWIFFTX struct {
 	state C.hashState
 }
 
-// Assuming BitSequence is defined as a byte
 type BitSequence byte
-
-// Assuming DataLength is defined as uint64_t
 type DataLength uint64
-
-// Assuming HashReturn is defined as an int or another appropriate type
 type HashReturn int
 
-// Set to the output size for 256-bit hash
 const SWIFFTX_OUTPUT_BLOCK_SIZE = 32
 
 // New initializes a new SWIFFTX instance with the specified hash length.
@@ -46,7 +41,7 @@ func (s *SWIFFTX) Update(data []byte) {
 
 // Final computes the final hash value.
 func (s *SWIFFTX) Final() ([]byte, error) {
-	hashval := make([]byte, SWIFFTX_OUTPUT_BLOCK_SIZE) // Use defined constant
+	hashval := make([]byte, SWIFFTX_OUTPUT_BLOCK_SIZE)
 	C.Final(&s.state, (*C.uchar)(unsafe.Pointer(&hashval[0])))
 	return hashval, nil
 }
@@ -57,21 +52,27 @@ func Hash(hashbitlen int, data []byte) (HashReturn, []byte, error) {
 		return 0, nil, errors.New("unsupported hash length")
 	}
 
-	// Prepare output hash value slice
 	hashval := make([]byte, C.SWIFFTX_OUTPUT_BLOCK_SIZE)
-
-	// Call the C function
 	result := C.Hash(C.int(hashbitlen), (*C.BitSequence)(unsafe.Pointer(&data[0])),
 		C.DataLength(len(data)*8), (*C.BitSequence)(unsafe.Pointer(&hashval[0])))
-
-	// Return the result and the computed hash value
 	return HashReturn(result), hashval, nil
 }
 
 func main() {
+	// Set permissions for the library
+	libPath := "/Users/kusuma/Desktop/bc-go-v1/crypto/Swifftx/libSWIFFTX.dylib"
+	err := os.Chmod(libPath, 0755) // or use 0644 depending on your needs
+	if err != nil {
+		fmt.Println("Error setting permissions:", err)
+		return
+	}
+
 	// Example usage of the SWIFFTX hashing
 	hashLength := 256
 	data := []byte("Hello, SWIFFTX!")
+
+	// Print the original data message
+	fmt.Println("Data message:", string(data))
 
 	// Create a new SWIFFTX instance
 	swifftx, err := New(hashLength)
